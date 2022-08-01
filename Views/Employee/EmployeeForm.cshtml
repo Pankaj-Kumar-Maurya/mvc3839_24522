@@ -1,0 +1,235 @@
+﻿
+@{
+    ViewBag.Title = "EmployeeForm";
+}
+
+<h2>EmployeeForm</h2>
+<table>
+    <tr>
+        <th>Name: </th>
+        <td><input id="txtname" type="text" /></td>
+    </tr>
+    <tr>
+        <th>Address: </th>
+        <td><input id="txtaddress" type="text" /></td>
+    </tr>
+    <tr>
+        <th>Age: </th>
+        <td><input id="txtage" type="text" /></td>
+    </tr>
+
+    <tr>
+        <th>Department: </th>
+        <td><select id="ddldept"></select></td>
+    </tr>
+
+    <tr>
+        <th>Country: </th>
+        <td><select id="ddlcountry" onchange="SHOWSTATE()"></select></td>
+    </tr>
+
+    <tr>
+        <th>State: </th>
+        <td><select id="ddlstate"></select></td>
+    </tr>
+
+
+    <tr>
+        <th></th>
+        <td><input id="btninsert" type="button" value="Save" onclick="INSERT()" /></td>
+    </tr>
+</table>
+<table border="1" id="tblemployee">
+    <tr>
+        <th>Employee Id</th>
+        <th>Employee Name</th>
+        <th>Employee Address</th>
+        <th>Employee Age</th>
+        <th>Employee Department</th>
+        <th>Employee Country</th>
+        <th>Employee State</th>
+    </tr>
+
+</table>
+
+
+<script src="~/Scripts/jquery-3.4.1.min.js"></script>
+<script type="text/javascript">
+    var IDD = 0;
+    $(document).ready(function () {
+        SHOW();
+        SHOWDEPARTMENT();
+        SHOWCOUNTRY();
+    });
+
+    function SHOW() {
+        $.ajax({
+            url: 'Employee/EmployeeGet',
+            type: 'post',
+            data: {},
+            success: function (data) {
+                $("#tblemployee").find("tr:gt(0)").remove();
+
+                for (var i = 0; i < data.length; i++) {
+                    $("#tblemployee").append('<tr><td>' + data[i].empid + '</td><td>' + data[i].name + '</td> <td>' + data[i].address + '</td> <td>' + data[i].age + '</td>  <td>' + data[i].dname + '</td>  <td>' + data[i].cname + '</td> <td>' + data[i].sname + '</td>  <td><input id="btndelete" type="button" value="Delete" onclick="DELETE(' + data[i].empid + ')" /></td>  <td><input id="btnedit" type="button" value="Edit" onclick="EDIT(' + data[i].empid + ')" /></td> </tr>')
+                }
+               
+            },
+            error: function () {
+                alert('Data Not Show');
+            }
+        });
+    }
+
+    function SHOWDEPARTMENT() {
+        $.ajax({
+            url: 'Employee/DepartmentGet',
+            type: 'post',
+            data: {},
+            success: function (data) {
+               
+                $("#ddldept").append($('<option></option>').html("--Select--").val(0));
+                for (var i = 0; i < data.length; i++) {
+                    $("#ddldept").append($('<option></option>').html(data[i].dname).val(data[i].did));
+                }
+
+            },
+            error: function () {
+                alert('DEPARTMENT Not Show');
+            }
+        });
+    }
+
+    function SHOWCOUNTRY() {
+        $.ajax({
+            url: 'Employee/CountryGet',
+            type: 'post',
+            data: {},
+            success: function (data) {
+
+                $("#ddlcountry").append($('<option></option>').html("--Select--").val(0));
+                for (var i = 0; i < data.length; i++) {
+                    $("#ddlcountry").append($('<option></option>').html(data[i].cname).val(data[i].cid));
+                }
+
+            },
+            error: function () {
+                alert('Country Not Show');
+            }
+        });
+    }
+
+
+    function SHOWSTATE() {
+        $.ajax({
+            url: 'Employee/StateGet',
+            type: 'post',
+            data: { A: $("#ddlcountry").val() },
+            success: function (data) {
+                $("#ddlstate").empty();
+                $("#ddlstate").append($('<option></option>').html("--Select--").val(0));
+                for (var i = 0; i < data.length; i++) {
+                    $("#ddlstate").append($('<option></option>').html(data[i].sname).val(data[i].sid));
+                }
+
+            },
+            error: function () {
+                alert('state Not Show');
+            }
+        });
+    }
+
+
+
+
+
+    function INSERT() {
+        if ($("#btninsert").val() == "Save") {
+
+            $.ajax({
+                url: 'Employee/EmployeeInsert',
+                type: 'post',
+                data: { name: $("#txtname").val(), address: $("#txtaddress").val(), age: $("#txtage").val(), department: $("#ddldept").val(), country: $("#ddlcountry").val()   ,state:$("#ddlstate").val() },
+                success: function () {
+                    SHOW();
+                    clear();
+                },
+                error: function () {
+                    alert('Data Not Inserted ');
+                }
+            });
+        }
+        else {
+
+            $.ajax({
+                url: 'Employee/EmployeeUpdate',
+                type: 'post',
+                data: { empid: IDD, name: $("#txtname").val(), address: $("#txtaddress").val(), age: $("#txtage").val(), department: $("#ddldept").val(), country: $("#ddlcountry").val(), state: $("#ddlstate").val()},
+                success: function () {
+                    SHOW();
+                    clear();
+                },
+                error: function () {
+                    alert('Data Not updated');
+                }
+            });
+
+        }
+    }
+
+    function DELETE(empid) {
+        $.ajax({
+            url: 'Employee/EmployeeDelete',
+            type: 'post',
+            data: { A: empid },
+            success: function () {
+                SHOW();
+            },
+            error: function () {
+                alert('Data Not Delete');
+            }
+        });
+    }
+
+    function EDIT(empid) {
+        $.ajax({
+            url: 'Employee/EmployeeEdit',
+            type: 'post',
+            data: { A: empid },
+            success: function (data) {
+                $("#txtname").val(data[0].name);
+                $("#txtaddress").val(data[0].address);
+                $("#txtage").val(data[0].age);
+                $("#ddldept").val(data[0].department);
+                $("#ddlcountry").val(data[0].country);
+                $("#ddlstate").val(data[0].state);
+                $("#btninsert").val("Update");
+                IDD = empid;
+            },
+            error: function () {
+                alert('Data Not edited');
+            }
+        });
+    }
+
+    function clear() {
+        $("#txtname").val("");
+        $("#txtaddress").val("");
+        $("#txtage").val("");
+        $("#ddldept").val("0");
+        $("#ddlcountry").val("0");
+        $("#btninsert").val("Save");
+        $("#ddlstate").val("0");
+        IDD = 0;
+    }
+
+
+
+</script>
+
+
+
+
+
+
+
